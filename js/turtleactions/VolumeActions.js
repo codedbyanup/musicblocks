@@ -220,24 +220,13 @@ function setupVolumeActions(activity) {
         }
 
         /**
-         * Sets the volume of a particular synth.
+         * Resolves a voice or drum display name or identifier to its internal technical synth key.
          *
-         * @param {String} synthname - type of synth
-         * @param {Number} volume
-         * @param {Number} turtle - Turtle index in turtles.turtleList
-         * @param {Number} [blk] - corresponding Block index in blocks.blockList
-         * @returns {void}
+         * @param {String} synthname
+         * @returns {String|null} internal synth key or null if not found
          */
-        static setSynthVolume(synthname, volume, turtle, blk) {
-            if (!Number.isFinite(volume)) return;
+        static resolveSynth(synthname) {
             let synth = null;
-            let firstConnection = null;
-            let lastConnection = null;
-
-            if (activity.logo.blockList && activity.logo.blockList[blk]) {
-                firstConnection = activity.logo.blockList[blk].connections[0];
-                lastConnection = last(activity.logo.blockList[blk].connections);
-            }
 
             if (synthname === DEFAULTVOICE || synthname === _(DEFAULTVOICE)) {
                 synth = DEFAULTVOICE;
@@ -268,6 +257,30 @@ function setupVolumeActions(activity) {
                     }
                 }
             }
+
+            return synth;
+        }
+
+        /**
+         * Sets the volume of a particular synth.
+         *
+         * @param {String} synthname - type of synth
+         * @param {Number} volume
+         * @param {Number} turtle - Turtle index in turtles.turtleList
+         * @param {Number} [blk] - corresponding Block index in blocks.blockList
+         * @returns {void}
+         */
+        static setSynthVolume(synthname, volume, turtle, blk) {
+            if (!Number.isFinite(volume)) return;
+            let firstConnection = null;
+            let lastConnection = null;
+
+            if (activity.logo.blockList && activity.logo.blockList[blk]) {
+                firstConnection = activity.logo.blockList[blk].connections[0];
+                lastConnection = last(activity.logo.blockList[blk].connections);
+            }
+
+            let synth = Singer.VolumeActions.resolveSynth(synthname);
 
             if (synth === null) {
                 activity.errorMsg(`${_("Synth not found: %s").replace(/%s/g, synthname)}`);
@@ -322,9 +335,10 @@ function setupVolumeActions(activity) {
          */
         static getSynthVolume(targetSynth, turtle) {
             const tur = activity.turtles.ithTurtle(turtle);
+            const synth = Singer.VolumeActions.resolveSynth(targetSynth) || targetSynth;
 
-            if (Object.prototype.hasOwnProperty.call(tur.singer.synthVolume, targetSynth)) {
-                return last(tur.singer.synthVolume[targetSynth]);
+            if (Object.prototype.hasOwnProperty.call(tur.singer.synthVolume, synth)) {
+                return last(tur.singer.synthVolume[synth]);
             }
 
             return 50;
